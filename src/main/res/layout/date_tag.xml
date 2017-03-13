@@ -3,21 +3,29 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:textAlignment="center">
-
-
-
-    <eu.siacs.conversations.ui.widget.CopyTextView
-        android:id="@+id/message_body"
-        android:layout_width="match_parent"
+    android:gravity="center"
+    >
+    <android.support.v7.widget.CardView
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:autoLink="web"
-        android:text="sabari"
-        android:gravity="center"
-        android:longClickable="true"
-        android:textColorLink="@color/black87"
-        android:textColor="?attr/color_text_primary"
-        android:textColorHighlight="@color/grey500"
-        android:textSize="?attr/TextSizeBody" />
-
+        app:cardUseCompatPadding="true"
+        app:cardElevation="4dp"
+        app:cardCornerRadius="3dp"
+        >
+        <eu.siacs.conversations.ui.widget.CopyTextView
+            android:id="@+id/message_body"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:autoLink="web"
+            android:text="sabari"
+            android:gravity="center"
+            android:longClickable="true"
+            android:textColorLink="@color/black87"
+            android:textColor="@color/datetagtextcolor"
+            android:textColorHighlight="@color/grey500"
+            android:textSize="?attr/TextSizeBody"
+            android:padding="5dp"
+            app:cardElevation="4dp"
+            app:cardCornerRadius="3dp"/>
+    </android.support.v7.widget.CardView>
 </RelativeLayout>
