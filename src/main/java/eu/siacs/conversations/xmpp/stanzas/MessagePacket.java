@@ -26,7 +26,10 @@ public class MessagePacket extends AbstractAcknowledgeableStanza {
 		body.setContent(text);
 		this.children.add(0, body);
 	}
-
+	public void setRtt(Element e){
+		this.children.remove(findChild("body"));
+		this.children.add(0, e);
+	}
 	public void setAxolotlMessage(Element axolotlMessage) {
 		this.children.remove(findChild("body"));
 		this.children.add(0, axolotlMessage);

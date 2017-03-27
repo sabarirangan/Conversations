@@ -42,6 +42,8 @@ import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
 import android.widget.Toast;
 
+import com.google.zxing.common.StringUtils;
+
 import net.java.otr4j.session.SessionStatus;
 
 import java.text.SimpleDateFormat;
@@ -49,6 +51,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -63,6 +66,8 @@ import eu.siacs.conversations.entities.MucOptions;
 import eu.siacs.conversations.entities.Presence;
 import eu.siacs.conversations.entities.Transferable;
 import eu.siacs.conversations.entities.TransferablePlaceholder;
+import eu.siacs.conversations.generator.IqGenerator;
+import eu.siacs.conversations.generator.MessageGenerator;
 import eu.siacs.conversations.http.HttpDownloadConnection;
 import eu.siacs.conversations.persistance.FileBackend;
 import eu.siacs.conversations.services.MessageArchiveService;
@@ -75,9 +80,15 @@ import eu.siacs.conversations.ui.adapter.MessageAdapter.OnContactPictureLongClic
 import eu.siacs.conversations.ui.widget.ListSelectionManager;
 import eu.siacs.conversations.utils.GeoHelper;
 import eu.siacs.conversations.utils.UIHelper;
+import eu.siacs.conversations.xml.Element;
+import eu.siacs.conversations.xmpp.OnIqPacketReceived;
 import eu.siacs.conversations.xmpp.XmppConnection;
 import eu.siacs.conversations.xmpp.chatstate.ChatState;
 import eu.siacs.conversations.xmpp.jid.Jid;
+import eu.siacs.conversations.xmpp.stanzas.IqPacket;
+import eu.siacs.conversations.xmpp.stanzas.MessagePacket;
+
+
 
 public class ConversationFragment extends Fragment implements EditMessage.KeyboardListener {
 
@@ -1534,6 +1545,21 @@ public class ConversationFragment extends Fragment implements EditMessage.Keyboa
 
 	@Override
 	public void onTypingStarted() {
+		IqPacket iqPacket=new IqPacket(IqPacket.TYPE.GET);
+		iqPacket.setFrom(this.conversation.getAccount().getJid());
+		iqPacket.setTo(this.conversation.getJid());
+		iqPacket.setId("disco1");
+		Element queryElement=new Element("query","http://jabber.org/protocol/disco#info");
+		iqPacket.addChild(queryElement);
+		final OnIqPacketReceived callback=new OnIqPacketReceived() {
+			@Override
+			public void onIqPacketReceived(Account account, IqPacket packet) {
+				//Log.d("dico",packet.toString());
+			}
+		};
+		activity.xmppConnectionService.sendIqPacket(this.conversation.getAccount(), iqPacket, callback);
+		MessagePacket messagePacket=new MessagePacket();
+
 		Account.State status = conversation.getAccount().getStatus();
 		if (status == Account.State.ONLINE && conversation.setOutgoingChatState(ChatState.COMPOSING)) {
 			activity.xmppConnectionService.sendChatState(conversation);
@@ -1559,8 +1585,73 @@ public class ConversationFragment extends Fragment implements EditMessage.Keyboa
 		updateSendButton();
 	}
 
+	private String oldText=null;
+	private int position=0;
+	private String getDifference(String nstr){
+		int i,j,startIndex=0,endIndex=0;
+		for (i = 0;i < oldText.length(); i++) {
+			if(nstr.charAt(i)!=oldText.charAt(i)){
+				startIndex=i;
+				break;
+			}
+		}
+		if(startIndex==0){
+			startIndex=oldText.length();
+			endIndex=nstr.length();
+		}else {
+			for (i = oldText.length() - 1,j=nstr.length()-1; i>=startIndex; i--,j--) {
+				if (nstr.charAt(j) != oldText.charAt(i)) {
+					endIndex = j + 1;
+					break;
+				}
+			}
+			if(i<startIndex){
+				endIndex=j+1;
+			}
+		}
+		position=startIndex;
+		return nstr.substring(startIndex,endIndex);
+	}
 	@Override
 	public void onTextChanged() {
+		if(oldText==null){
+			oldText=mEditMessage.getText().toString();
+			Message m=new Message(conversation,"",Message.ENCRYPTION_NONE);
+			MessageGenerator generator=new MessageGenerator(activity.xmppConnectionService);
+			MessagePacket packet=generator.generateChat(m);
+			generator.addDelay(packet, m.getTimeSent());
+			Element rtt = new Element("rtt","urn:xmpp:rtt:0");
+			Element t=new Element("t");
+			t.setContent(oldText);
+			t.setAttribute("p",0);
+			rtt.addChild(t);
+			rtt.setAttribute("event","new");
+			packet.setRtt(rtt);
+			activity.xmppConnectionService.sendMessagePacket(conversation.getAccount(),packet);
+			Log.d("text",oldText);
+		}else{
+			String newText=mEditMessage.getText().toString();
+			if(oldText.length()<newText.length()){
+				String difference=getDifference(newText);
+				oldText=newText;
+				Log.d("text",difference+Integer.toString(position));
+				Message m=new Message(conversation,difference,Message.ENCRYPTION_NONE);
+				MessageGenerator generator=new MessageGenerator(activity.xmppConnectionService);
+				MessagePacket packet=generator.generateChat(m);
+				generator.addDelay(packet, m.getTimeSent());
+				Element rtt = new Element("rtt","urn:xmpp:rtt:0");
+				Element t=new Element("t");
+				t.setContent(difference);
+				t.setAttribute("p",position);
+				rtt.addChild(t);
+				rtt.setAttribute("event","edit");
+				packet.setRtt(rtt);
+				activity.xmppConnectionService.sendMessagePacket(conversation.getAccount(),packet);
+			}else {
+				oldText=newText;
+			}
+		}
+
 		if (conversation != null && conversation.getCorrectingMessage() != null) {
 			updateSendButton();
 		}
