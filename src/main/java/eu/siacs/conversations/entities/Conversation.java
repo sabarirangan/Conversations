@@ -930,6 +930,15 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 		}
 	}
 
+	public Message getLastMessage(){
+		synchronized (this.messages) {
+			if(messages.size()==0){
+				return null;
+			}
+			return this.messages.get(messages.size()-1);
+		}
+	}
+
 	public void prepend(Message message) {
 		message.setConversation(this);
 		synchronized (this.messages) {

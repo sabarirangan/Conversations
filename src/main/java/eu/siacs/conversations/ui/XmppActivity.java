@@ -153,6 +153,7 @@ public abstract class XmppActivity extends Activity {
 		}
 	};
 
+
 	protected ConferenceInvite mPendingConferenceInvite = null;
 
 

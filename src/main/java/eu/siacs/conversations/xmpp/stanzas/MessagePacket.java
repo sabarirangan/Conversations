@@ -2,6 +2,10 @@ package eu.siacs.conversations.xmpp.stanzas;
 
 import android.util.Pair;
 
+import java.util.Hashtable;
+import java.util.List;
+import java.util.jar.Attributes;
+
 import eu.siacs.conversations.parser.AbstractParser;
 import eu.siacs.conversations.xml.Element;
 
@@ -18,6 +22,13 @@ public class MessagePacket extends AbstractAcknowledgeableStanza {
 
 	public String getBody() {
 		return findChildContent("body");
+	}
+	public List<Element> getRtt(){
+		return findChildChildren("rtt");
+	}
+
+	public Hashtable<String, String> getRttAttribute(){
+		return findAttributes("rtt");
 	}
 
 	public void setBody(String text) {
