@@ -1612,42 +1612,70 @@ public class ConversationFragment extends Fragment implements EditMessage.Keyboa
 		position=startIndex;
 		return nstr.substring(startIndex,endIndex);
 	}
+
+	public int getErasedCount(String nstr){
+		int i,j,first;
+		for(i=0;i<nstr.length();i++){
+			if(oldText.charAt(i)!=nstr.charAt(i))
+				break;
+		}
+		first=i;
+		if(i==nstr.length()){
+			position=oldText.length();
+			return oldText.length()-nstr.length();
+		}else{
+			for(i=nstr.length()-1,j=oldText.length()-1;i>=first;i--,j--){
+				if(oldText.charAt(j)!=nstr.charAt(i))
+					break;
+			}
+			position=j+1;
+			return j-first+1;
+		}
+	}
+	public void sendRTT(String event,String content,int position){
+		Message m=new Message(conversation,"",Message.ENCRYPTION_NONE);
+		MessageGenerator generator=new MessageGenerator(activity.xmppConnectionService);
+		MessagePacket packet=generator.generateChat(m);
+		generator.addDelay(packet, m.getTimeSent());
+		Element rtt = new Element("rtt","urn:xmpp:rtt:0");
+		Element t=new Element("t");
+		t.setContent(content);
+		t.setAttribute("p",position);
+		rtt.addChild(t);
+		rtt.setAttribute("event",event);
+		packet.setRtt(rtt);
+		activity.xmppConnectionService.sendMessagePacket(conversation.getAccount(),packet);
+	}
+	public void sendRTT(String event,int position,int count){
+		Message m=new Message(conversation,"",Message.ENCRYPTION_NONE);
+		MessageGenerator generator=new MessageGenerator(activity.xmppConnectionService);
+		MessagePacket packet=generator.generateChat(m);
+		generator.addDelay(packet, m.getTimeSent());
+		Element rtt = new Element("rtt","urn:xmpp:rtt:0");
+		Element e=new Element("e");
+		e.setAttribute("p",position);
+		e.setAttribute("n",count);
+		rtt.addChild(e);
+		rtt.setAttribute("event",event);
+		packet.setRtt(rtt);
+		activity.xmppConnectionService.sendMessagePacket(conversation.getAccount(),packet);
+	}
 	@Override
 	public void onTextChanged() {
 		if(oldText==null){
 			oldText=mEditMessage.getText().toString();
-			Message m=new Message(conversation,"",Message.ENCRYPTION_NONE);
-			MessageGenerator generator=new MessageGenerator(activity.xmppConnectionService);
-			MessagePacket packet=generator.generateChat(m);
-			generator.addDelay(packet, m.getTimeSent());
-			Element rtt = new Element("rtt","urn:xmpp:rtt:0");
-			Element t=new Element("t");
-			t.setContent(oldText);
-			t.setAttribute("p",0);
-			rtt.addChild(t);
-			rtt.setAttribute("event","new");
-			packet.setRtt(rtt);
-			activity.xmppConnectionService.sendMessagePacket(conversation.getAccount(),packet);
-			Log.d("text",oldText);
+			sendRTT("new",oldText,0);
 		}else{
 			String newText=mEditMessage.getText().toString();
 			if(oldText.length()<newText.length()){
 				String difference=getDifference(newText);
 				oldText=newText;
-				Log.d("text",difference+Integer.toString(position));
-				Message m=new Message(conversation,difference,Message.ENCRYPTION_NONE);
-				MessageGenerator generator=new MessageGenerator(activity.xmppConnectionService);
-				MessagePacket packet=generator.generateChat(m);
-				generator.addDelay(packet, m.getTimeSent());
-				Element rtt = new Element("rtt","urn:xmpp:rtt:0");
-				Element t=new Element("t");
-				t.setContent(difference);
-				t.setAttribute("p",position);
-				rtt.addChild(t);
-				rtt.setAttribute("event","edit");
-				packet.setRtt(rtt);
-				activity.xmppConnectionService.sendMessagePacket(conversation.getAccount(),packet);
+				sendRTT("edit",difference,position);
 			}else {
+
+				Log.d("sabari",Integer.toString(getErasedCount(newText))+Integer.toString(position));
+
+				sendRTT("edit",position,getErasedCount(newText));
 				oldText=newText;
 			}
 		}
