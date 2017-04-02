@@ -1545,21 +1545,6 @@ public class ConversationFragment extends Fragment implements EditMessage.Keyboa
 
 	@Override
 	public void onTypingStarted() {
-		IqPacket iqPacket=new IqPacket(IqPacket.TYPE.GET);
-		iqPacket.setFrom(this.conversation.getAccount().getJid());
-		iqPacket.setTo(this.conversation.getJid());
-		iqPacket.setId("disco1");
-		Element queryElement=new Element("query","http://jabber.org/protocol/disco#info");
-		iqPacket.addChild(queryElement);
-		final OnIqPacketReceived callback=new OnIqPacketReceived() {
-			@Override
-			public void onIqPacketReceived(Account account, IqPacket packet) {
-				//Log.d("dico",packet.toString());
-			}
-		};
-		activity.xmppConnectionService.sendIqPacket(this.conversation.getAccount(), iqPacket, callback);
-		MessagePacket messagePacket=new MessagePacket();
-
 		Account.State status = conversation.getAccount().getStatus();
 		if (status == Account.State.ONLINE && conversation.setOutgoingChatState(ChatState.COMPOSING)) {
 			activity.xmppConnectionService.sendChatState(conversation);

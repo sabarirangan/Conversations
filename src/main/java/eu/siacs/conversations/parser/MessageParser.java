@@ -11,9 +11,12 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.jar.Attributes;
 
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.crypto.OtrService;
@@ -361,9 +364,42 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
 		}
 
 		if (timestamp == null) {
-			timestamp = AbstractParser.parseTimestamp(original,AbstractParser.parseTimestamp(packet));
+			timestamp = AbstractParser.parseTimestamp(original, AbstractParser.parseTimestamp(packet));
 		}
-		final String body = packet.getBody();
+		String body = packet.getBody();
+		if (body == null && packet.getType() == MessagePacket.TYPE_CHAT) {
+			List<Element> actionElement = packet.getRtt();
+			if (actionElement != null) {
+                String b = actionElement.get(0).getContent();
+				Hashtable<String, String> rttattribute=packet.getRttAttribute();
+				if(rttattribute.containsKey("event")&&rttattribute.get("event").equals("new")){
+                    body=b;
+				}else if(rttattribute.containsKey("event")&&rttattribute.get("event").equals("edit")){
+					Conversation conversation = mXmppConnectionService.findOrCreateConversation(account, packet.getFrom().toBareJid(), false, false, query);
+					Message m = conversation.getLastMessage();
+                    String tagname=actionElement.get(0).getName();
+                    if(tagname.equals("t")){
+                        m.setBody(m.getBody()+b);
+                        mXmppConnectionService.updateConversationUi();
+                    }else{
+                        Hashtable<String,String> attr=actionElement.get(0).getAttributes();
+                        int p=Integer.parseInt(attr.get("p"));
+                        int n=Integer.parseInt(attr.get("n"));
+                        String currentText=m.getBody();
+						String newString=currentText.substring(0,p-n);
+						Log.d("sabari",newString);
+						Log.d("sabari",Integer.toString(p)+" "+Integer.toString(n));
+						if(p!=currentText.length()){
+							newString+=currentText.substring(p,currentText.length());
+						}
+						Log.d("sabari",newString);
+						m.setBody(newString);
+                        mXmppConnectionService.updateConversationUi();
+                    }
+
+				}
+			}
+		}
 		final Element mucUserElement = packet.findChild("x", "http://jabber.org/protocol/muc#user");
 		final String pgpEncrypted = packet.findChildContent("x", "jabber:x:encrypted");
 		final Element replaceElement = packet.findChild("replace", "urn:xmpp:message-correct:0");
@@ -388,7 +424,6 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
 			Log.d(Config.LOGTAG,"no from in: "+packet.toString());
 			return;
 		}
-		
 		boolean isTypeGroupChat = packet.getType() == MessagePacket.TYPE_GROUPCHAT;
 		boolean isProperlyAddressed = (to != null ) && (!to.isBareJid() || account.countPresences() == 0);
 		boolean isMucStatusMessage = from.isBareJid() && mucUserElement != null && mucUserElement.hasChild("status");
@@ -511,7 +546,7 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
 							&& replacedMessage.getTrueCounterpart().equals(message.getTrueCounterpart());
 					final boolean duplicate = conversation.hasDuplicateMessage(message);
 					if (fingerprintsMatch && (trueCountersMatch || !conversationMultiMode) && !duplicate) {
-						Log.d(Config.LOGTAG, "replaced message '" + replacedMessage.getBody() + "' with '" + message.getBody() + "'");
+						Log.d(Config.LOGTAG, "replaced message '" + replacedMessage.getBody() + "' with '"+message.getBody() + "'");
 						synchronized (replacedMessage) {
 							final String uuid = replacedMessage.getUuid();
 							replacedMessage.setUuid(UUID.randomUUID().toString());
@@ -644,7 +679,7 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
 							//ignored
 						}
 					} else if ("item".equals(child.getName())) {
-						MucOptions.User user = AbstractParser.parseItem(conversation,child);
+						MucOptions.User user = AbstractParser.parseItem(conversation, child);
 						Log.d(Config.LOGTAG,account.getJid()+": changing affiliation for "
 								+user.getRealJid()+" to "+user.getAffiliation()+" in "
 								+conversation.getJid().toBareJid());
@@ -667,7 +702,6 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
 				}
 			}
 		}
-
 
 
 		Element received = packet.findChild("received", "urn:xmpp:chat-markers:0");

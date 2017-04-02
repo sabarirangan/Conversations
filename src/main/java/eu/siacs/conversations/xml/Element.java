@@ -66,6 +66,15 @@ public class Element {
 		Element element = findChild(name);
 		return element == null ? null : element.getContent();
 	}
+	public List<Element> findChildChildren(String name) {
+		Element element = findChild(name);
+		return element == null ? null : element.getChildren();
+	}
+
+	public Hashtable<String, String> findAttributes(String name) {
+		Element element = findChild(name);
+		return element == null ? null : element.getAttributes();
+	}
 
 	public Element findChild(String name, String xmlns) {
 		for (Element child : this.children) {
