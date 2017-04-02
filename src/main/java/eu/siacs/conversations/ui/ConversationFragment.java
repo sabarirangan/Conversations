@@ -1580,21 +1580,20 @@ public class ConversationFragment extends Fragment implements EditMessage.Keyboa
 				break;
 			}
 		}
-		if(startIndex==0){
+		if(i==oldText.length())
 			startIndex=oldText.length();
-			endIndex=nstr.length();
-		}else {
-			for (i = oldText.length() - 1,j=nstr.length()-1; i>=startIndex; i--,j--) {
-				if (nstr.charAt(j) != oldText.charAt(i)) {
-					endIndex = j + 1;
-					break;
-				}
-			}
-			if(i<startIndex){
-				endIndex=j+1;
+		for (i = oldText.length() - 1, j = nstr.length() - 1;i >= startIndex; i--, j--) {
+			if (nstr.charAt(j) != oldText.charAt(i)) {
+				endIndex = j + 1;
+				break;
 			}
 		}
-		position=startIndex;
+		if (i < startIndex) {
+			endIndex = j+1;
+		}
+        Log.d("rangan",Integer.toString(startIndex)+" "+Integer.toString(endIndex)+" "+oldText+" "+nstr);
+		position = startIndex;
+
 		return nstr.substring(startIndex,endIndex);
 	}
 

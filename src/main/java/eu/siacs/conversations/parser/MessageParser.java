@@ -379,20 +379,35 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
 					Message m = conversation.getLastMessage();
                     String tagname=actionElement.get(0).getName();
                     if(tagname.equals("t")){
-                        m.setBody(m.getBody()+b);
-                        mXmppConnectionService.updateConversationUi();
+						Hashtable<String,String> attr=actionElement.get(0).getAttributes();
+						int p=Integer.parseInt(attr.get("p"));
+                        if(m==null){
+                            body=b;
+                        }else{
+                            String currentString=m.getBody();
+                            String newString;
+                            if(p!=0&&p!=currentString.length()){
+                                newString=currentString.substring(0,p);
+                                newString=newString+b;
+                                newString=newString+currentString.substring(p,currentString.length());
+                            }else if(p==0){
+                                newString=b+currentString;
+                            }else {
+                                newString=currentString+b;
+                            }
+                            m.setBody(newString);
+                            mXmppConnectionService.updateConversationUi();
+                        }
+
                     }else{
                         Hashtable<String,String> attr=actionElement.get(0).getAttributes();
                         int p=Integer.parseInt(attr.get("p"));
                         int n=Integer.parseInt(attr.get("n"));
                         String currentText=m.getBody();
 						String newString=currentText.substring(0,p-n);
-						Log.d("sabari",newString);
-						Log.d("sabari",Integer.toString(p)+" "+Integer.toString(n));
 						if(p!=currentText.length()){
 							newString+=currentText.substring(p,currentText.length());
 						}
-						Log.d("sabari",newString);
 						m.setBody(newString);
                         mXmppConnectionService.updateConversationUi();
                     }
