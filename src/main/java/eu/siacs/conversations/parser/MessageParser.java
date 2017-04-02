@@ -370,19 +370,33 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
 		if (body == null && packet.getType() == MessagePacket.TYPE_CHAT) {
 			List<Element> actionElement = packet.getRtt();
 			if (actionElement != null) {
-				String b = actionElement.get(0).getContent();
+                String b = actionElement.get(0).getContent();
 				Hashtable<String, String> rttattribute=packet.getRttAttribute();
 				if(rttattribute.containsKey("event")&&rttattribute.get("event").equals("new")){
-					body=b;
-				}else{
+                    body=b;
+				}else if(rttattribute.containsKey("event")&&rttattribute.get("event").equals("edit")){
 					Conversation conversation = mXmppConnectionService.findOrCreateConversation(account, packet.getFrom().toBareJid(), false, false, query);
 					Message m = conversation.getLastMessage();
-					if(m==null){
-						body=b;
-					}else{
-						m.setBody(m.getBody() + b);
-						mXmppConnectionService.updateConversationUi();
-					}
+                    String tagname=actionElement.get(0).getName();
+                    if(tagname.equals("t")){
+                        m.setBody(m.getBody() + b);
+                        mXmppConnectionService.updateConversationUi();
+                    }else{
+                        Hashtable<String,String> attr=actionElement.get(0).getAttributes();
+                        int p=Integer.parseInt(attr.get("p"));
+                        int n=Integer.parseInt(attr.get("n"));
+                        String currentText=m.getBody();
+						String newString=currentText.substring(0,p-n);
+						Log.d("sabari",newString);
+						Log.d("sabari",Integer.toString(p)+" "+Integer.toString(n));
+						if(p!=currentText.length()){
+							newString+=currentText.substring(p,currentText.length());
+						}
+						Log.d("sabari",newString);
+						m.setBody(newString);
+                        mXmppConnectionService.updateConversationUi();
+                    }
+
 				}
 			}
 		}
