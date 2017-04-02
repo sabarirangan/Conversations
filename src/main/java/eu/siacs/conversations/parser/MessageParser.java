@@ -714,7 +714,7 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
 		Element displayed = packet.findChild("displayed", "urn:xmpp:chat-markers:0");
 		if (displayed != null) {
 			if (packet.fromAccount(account)) {
-				Conversation conversation = mXmppConnectionService.find(account, counterpart.toBareJid());
+				Conversation conversation = mXmppConnectionService.find(account,counterpart.toBareJid());
 				if (conversation != null) {
 					mXmppConnectionService.markRead(conversation);
 				}
@@ -769,7 +769,7 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
 
 	private void activateGracePeriod(Account account) {
 		long duration = mXmppConnectionService.getPreferences().getLong("race_period_length", 144) * 1000;
-		Log.d(Config.LOGTAG,account.getJid().toBareJid()+": activating grace period till "+TIME_FORMAT.format(new Date(System.currentTimeMillis()+duration)));
+		Log.d(Config.LOGTAG,account.getJid().toBareJid()+": activating grace period till "+TIME_FORMAT.format(new Date(System.currentTimeMillis() + duration)));
 		account.activateGracePeriod(duration);
 	}
 }
