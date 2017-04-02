@@ -289,7 +289,7 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
 
 			Element item = items.findChild("item");
 			Set<Integer> deviceIds = mXmppConnectionService.getIqParser().deviceIds(item);
-			Log.d(Config.LOGTAG, AxolotlService.getLogprefix(account)+"Received PEP device list ("+deviceIds+") update from "+ from+", processing...");
+			Log.d(Config.LOGTAG, AxolotlService.getLogprefix(account)+"Received PEP device list ("+deviceIds+") update from "+ from + ", processing...");
 			AxolotlService axolotlService = account.getAxolotlService();
 			axolotlService.registerDevices(from, deviceIds);
 			mXmppConnectionService.updateAccountUi();
@@ -421,7 +421,7 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
 		boolean notify = false;
 
 		if (from == null) {
-			Log.d(Config.LOGTAG, "no from in: "+packet.toString());
+			Log.d(Config.LOGTAG,"no from in: "+packet.toString());
 			return;
 		}
 		boolean isTypeGroupChat = packet.getType() == MessagePacket.TYPE_GROUPCHAT;
@@ -477,7 +477,7 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
 						return;
 					}
 				} else {
-					Log.d(Config.LOGTAG, account.getJid().toBareJid()+": ignoring OTR message from "+from+" isForwarded="+Boolean.toString(isForwarded)+", isProperlyAddressed="+Boolean.valueOf(isProperlyAddressed));
+					Log.d(Config.LOGTAG,account.getJid().toBareJid()+": ignoring OTR message from "+from+" isForwarded="+Boolean.toString(isForwarded)+", isProperlyAddressed="+Boolean.valueOf(isProperlyAddressed));
 					message = new Message(conversation, body, Message.ENCRYPTION_NONE, status);
 				}
 			} else if (pgpEncrypted != null && Config.supportOpenPgp()) {
@@ -488,7 +488,7 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
 					final Jid fallback = conversation.getMucOptions().getTrueCounterpart(counterpart);
 					origin = getTrueCounterpart(query != null ? mucUserElement : null, fallback);
 					if (origin == null) {
-						Log.d(Config.LOGTAG, "axolotl message in non anonymous conference received");
+						Log.d(Config.LOGTAG,"axolotl message in non anonymous conference received");
 						return;
 					}
 				} else {
@@ -546,7 +546,7 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
 							&& replacedMessage.getTrueCounterpart().equals(message.getTrueCounterpart());
 					final boolean duplicate = conversation.hasDuplicateMessage(message);
 					if (fingerprintsMatch && (trueCountersMatch || !conversationMultiMode) && !duplicate) {
-						Log.d(Config.LOGTAG, "replaced message '"+replacedMessage.getBody()+"' with '"+message.getBody()+"'");
+						Log.d(Config.LOGTAG, "replaced message '" + replacedMessage.getBody() + "' with '"+message.getBody() + "'");
 						synchronized (replacedMessage) {
 							final String uuid = replacedMessage.getUuid();
 							replacedMessage.setUuid(UUID.randomUUID().toString());
@@ -573,22 +573,22 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
 						}
 						return;
 					} else {
-						Log.d(Config.LOGTAG, account.getJid().toBareJid()+": received message correction but verification didn't check out");
+						Log.d(Config.LOGTAG,account.getJid().toBareJid()+": received message correction but verification didn't check out");
 					}
 				}
 			}
 
 			long deletionDate = mXmppConnectionService.getAutomaticMessageDeletionDate();
 			if (deletionDate != 0 && message.getTimeSent() < deletionDate) {
-				Log.d(Config.LOGTAG, account.getJid().toBareJid()+": skipping message from "+message.getCounterpart().toString()+" because it was sent prior to our deletion date");
+				Log.d(Config.LOGTAG,account.getJid().toBareJid()+": skipping message from "+message.getCounterpart().toString()+" because it was sent prior to our deletion date");
 				return;
 			}
 
-			boolean checkForDuplicates = (isTypeGroupChat && packet.hasChild("delay", "urn:xmpp:delay"))
+			boolean checkForDuplicates = (isTypeGroupChat && packet.hasChild("delay","urn:xmpp:delay"))
 					|| message.getType() == Message.TYPE_PRIVATE
 					|| message.getServerMsgId() != null;
 			if (checkForDuplicates && conversation.hasDuplicateMessage(message)) {
-				Log.d(Config.LOGTAG, "skipping duplicate message from "+message.getCounterpart().toString()+" "+message.getBody());
+				Log.d(Config.LOGTAG,"skipping duplicate message from "+message.getCounterpart().toString()+" "+message.getBody());
 				return;
 			}
 
@@ -647,7 +647,7 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
 					mXmppConnectionService.getNotificationService().pushFromBacklog(message);
 				}
 			}
-		} else if (!packet.hasChild("body")) { //no body
+		} else if (!packet.hasChild("body")){ //no body
 			Conversation conversation = mXmppConnectionService.find(account, from.toBareJid());
 			if (isTypeGroupChat) {
 				if (packet.hasChild("subject")) {
@@ -680,9 +680,9 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
 						}
 					} else if ("item".equals(child.getName())) {
 						MucOptions.User user = AbstractParser.parseItem(conversation, child);
-						Log.d(Config.LOGTAG, account.getJid()+": changing affiliation for "
-								+ user.getRealJid()+" to "+user.getAffiliation()+" in "
-								+ conversation.getJid().toBareJid());
+						Log.d(Config.LOGTAG,account.getJid()+": changing affiliation for "
+								+user.getRealJid()+" to "+user.getAffiliation()+" in "
+								+conversation.getJid().toBareJid());
 						if (!user.realJidMatchesAccount()) {
 							conversation.getMucOptions().updateUser(user);
 							mXmppConnectionService.getAvatarService().clear(conversation);
@@ -692,7 +692,7 @@ public class MessageParser extends AbstractParser implements OnMessagePacketRece
 								Jid jid = user.getRealJid();
 								List<Jid> cryptoTargets = conversation.getAcceptedCryptoTargets();
 								if (cryptoTargets.remove(user.getRealJid())) {
-									Log.d(Config.LOGTAG, account.getJid().toBareJid()+": removed "+jid+" from crypto targets of "+conversation.getName());
+									Log.d(Config.LOGTAG,account.getJid().toBareJid()+": removed "+jid+" from crypto targets of "+conversation.getName());
 									conversation.setAcceptedCryptoTargets(cryptoTargets);
 									mXmppConnectionService.updateConversation(conversation);
 								}
